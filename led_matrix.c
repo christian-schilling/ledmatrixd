@@ -35,7 +35,6 @@
 #include "arial_bold_14.h"
 
 static uint16_t charGetStart(char c);
-static void clearScreen(struct _ledLine *ledLine);
 
 /* Diese Arrays werden nur zur Uebertragung ans Modul genutzt */
 static uint16_t RED[4][16];
@@ -217,7 +216,7 @@ int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length)
 		return 0;
 	
 
-	clearScreen(ledLine);
+	led_matrix_clear_screen(ledLine);
 
 	ledLine->x = 0;
 	ledLine->y = 1;
@@ -225,7 +224,7 @@ int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length)
 	return 1;
 }
 
-static void clearScreen(struct _ledLine *ledLine)
+void led_matrix_clear_screen(struct _ledLine *ledLine)
 {
     memset(ledLine->column_red,0,sizeof(uint16_t)*LINE_LENGTH);
     memset(ledLine->column_green,0,sizeof(uint16_t)*LINE_LENGTH);

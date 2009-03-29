@@ -24,9 +24,12 @@ namespace led_matrix {
         int shift_position; /**< position of the output arrays */
     }
     
-    [CCode (cname = "led_matrix_allocate_line", cheater_filename = "led_matrix.h")]
+    [CCode (cname = "led_matrix_allocate_line", cheader_filename = "led_matrix.h")]
     public static int allocate_line(line *ledLine, int line_length);
 
     [CCode (cname = "led_matrix_shift_left", cheader_filename = "led_matrix.h")]
     public static int shift_left(line *ledLine);
+    
+    [CCode (cname = "led_matrix_clear_screen", cheader_filename = "led_matrix.h")]
+    public static int clear_screen(line *ledLine);
 }
