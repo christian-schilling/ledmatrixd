@@ -51,6 +51,7 @@ extern void led_matrix_update(struct _ledLine *ledLine);
 extern void led_matrix_print(char *msg, struct _ledLine *ledLine);
 extern int led_matrix_shift_left(struct _ledLine *ledLine);
 extern int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length);
+extern void led_matrix_clear_screen(struct _ledLine *ledLine);
 
 #endif
 

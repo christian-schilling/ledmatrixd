@@ -5,6 +5,7 @@ using led_matrix;
 public class LedMatrix : Object {
 
     bool initialized;
+    bool scrolling;
     led_matrix.line ledLine;
 
     public LedMatrix() {
@@ -16,11 +17,6 @@ public class LedMatrix : Object {
             led_matrix.allocate_line(&ledLine,512);
             led_matrix.init(matrix_ip);
             initialized = true;
-
-            GLib.Timeout->add(200,() => {
-                led_matrix.shift_left(&ledLine);
-                led_matrix.update(&ledLine);
-            });
         }
     }
 
@@ -28,6 +24,27 @@ public class LedMatrix : Object {
         if(!initialized) return;
         led_matrix.print(msg, &ledLine);
         led_matrix.update(&ledLine);
+    }
+
+    public void ScrollLeft(int speed) {
+        if(!initialized || scrolling) return;
+        scrolling = true;
+        GLib.Timeout->add(speed,() => {
+            if(!scrolling)
+                return false;
+            led_matrix.shift_left(&ledLine);
+            led_matrix.update(&ledLine);
+        });
+    }
+
+    public void ScrollStop() {
+        if(!initialized || !scrolling) return;
+        scrolling = false;
+    }
+    
+    public void ClearScreen() {
+        if(!initialized) return;
+        led_matrix.clear_screen(&ledLine);
     }
 }
 
