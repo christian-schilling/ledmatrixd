@@ -20,9 +20,28 @@
 #ifndef __LED_ROUTINES_H__
 #define __LED_ROUTINES_H__
 
+#include <stdint.h>
+
 #define COLOR_RED 0
 #define COLOR_GREEN 1
 #define COLOR_AMBER 2
+
+#define LINE_LENGTH 512
+//#define LED_HEADFIRST
+
+/** Struct holding a line drawable at the display
+ *
+ */
+struct _ledLine
+{
+    uint16_t *column_red; /**< the red part of the string will be put here */
+    uint16_t *column_green; /**< the green part of the string will be put here */
+    uint16_t *column_red_output; /**< red part of the string, possibly shifted */
+    uint16_t *column_green_output; /**< green part of the string, possibly shifted */
+    int x; /**< current x position */
+    int y; /**< current y position */
+    int shift_position; /**< position of the output arrays */
+};
 
 extern int led_matrix_init(char *matrix_ip);
 extern void led_matrix_finish();

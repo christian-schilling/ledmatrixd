@@ -34,26 +34,18 @@
 #include "led_matrix.h"
 #include "arial_bold_14.h"
 
-static void hilfsarray_to_normal(void);
 static uint16_t charGetStart(char c);
+static void clearScreen();
 
 /* Diese Arrays werden nur zur Uebertragung ans Modul genutzt */
 static uint16_t RED[4][16];
 static uint16_t GREEN[4][16];
-static uint16_t tmpRED[4][16];
-static uint16_t tmpGREEN[4][16];
 
-/* Dies sind die eigentlich genutzten Arrays. Grund:
- * einfachere Handhabung! Jedes Element entspricht genau einer Spalte
- */
-static uint16_t column_red[512];
-static uint16_t column_green[512];
-
-static int position = 0;
-
-static uint16_t x,y=1;
+static uint8_t *font = Arial_Bold_14;
 
 static int client_sock;
+
+static struct _ledLine *ledLine = NULL;
 
 int led_matrix_init(char *matrix_ip)
 {
@@ -81,16 +73,15 @@ int led_matrix_init(char *matrix_ip)
 
 void led_matrix_finish()
 {
+    if(ledLine)
+        free(ledLine);
     close(client_sock);
 }
 
-/* Achtung, funktioniert derzeit nur fuer Arial_Bold_14 ! */
 static uint16_t charGetStart(char c)
 {
-    uint8_t first_char = Arial_Bold_14[4];
-    uint8_t char_count = Arial_Bold_14[5];
-    uint8_t char_width = Arial_Bold_14[6+c-first_char];
-    uint8_t char_height = Arial_Bold_14[3];
+    uint8_t first_char = font[4];
+    uint8_t char_height = font[3];
 
     uint8_t factor = 1;
 
@@ -102,149 +93,241 @@ static uint16_t charGetStart(char c)
 
     for(counter=0;counter<(c-first_char);counter++)
     {
-        position += Arial_Bold_14[6+counter]*factor;
+        position += font[6+counter]*factor;
     }
 
     return position;
 }
 
-
-static void hilfsarray_to_normal(void)
+int putChar(char c, uint8_t color)
 {
-    int i,p,m;
-    memset(&RED,0,sizeof(RED));
-    memset(&GREEN,0,sizeof(GREEN));
 
-    for(m=0;m<4;m++)
+    uint8_t first_char = font[4];
+    uint8_t char_count = font[5];
+    uint8_t char_width;
+    uint8_t char_height = font[3];
+
+    uint16_t start;
+
+    uint8_t i;
+
+    if(c == '\n')
     {
-        for(i=0;i<16;i++)
-        {
-            for(p=0;p<16;p++)
-            {
-                RED[m][i+y] |= ((column_red[p+m*16] & (1<<i))>>(i)<<p);
-                GREEN[m][i+y] |= ((column_green[p+m*16] & (1<<i))>>(i)<<p);
-            }
-        }
+        ledLine->x = 0;
+        ledLine->y = 8;
+        return 1;
     }
-}
 
-void putChar(char c, uint8_t color)
-{
+    /* if char is not in our font just leave */
+    if(c < first_char || c > (first_char + char_count))
+        return 1;
+    
     /* Leerzeichen abfangen */
     if(c == 32)
+        char_width = 4;
+    else
     {
-        x += 4;
-        return;
+        char_width = font[6+c-first_char];
+        start = charGetStart(c);
     }
+    
+    if((ledLine->x + char_width) >= LINE_LENGTH-50)
+        return 0;
 
-    uint8_t first_char = Arial_Bold_14[4];
-    uint8_t char_count = Arial_Bold_14[5];
-    uint8_t char_width = Arial_Bold_14[6+c-first_char];
-
-    uint16_t start = charGetStart(c);
-
-    uint8_t i,p;
+    if(c == ' ')
+    {
+        ledLine->x += 4;
+        return 1;
+    }
 
     for(i=0;i<char_width;i++)
     {
         if(color == COLOR_RED)
         {
-            column_red[i+x] = Arial_Bold_14[6+char_count+start+i];
+            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
         }
         else if(color == COLOR_GREEN)
         {
-            column_green[i+x] = Arial_Bold_14[6+char_count+start+i];
+            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
         }
         else if(color == COLOR_AMBER)
         {
-            column_red[i+x] = Arial_Bold_14[6+char_count+start+i];
-            column_green[i+x] = Arial_Bold_14[6+char_count+start+i];
+            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
+            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
         }
     }
+    /* unteren Teil der Zeichen schreiben (noch nicht dynamisch fuer verschiedene Schriftgroessen) */
     for(i=0;i<char_width;i++)
     {
         if(color == COLOR_RED)
         {
             /* Man erklaere mir was ich hier geschrieben. Aber funktionieren tuts! :-) */
-            column_red[i+x] |= Arial_Bold_14[6+char_count+start+i+char_width]<<6;
+            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
         }
         else if(color == COLOR_GREEN)
         {
-            column_green[i+x] |= Arial_Bold_14[6+char_count+start+i+char_width]<<6;
+            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
         }
         else if(color == COLOR_AMBER)
         {
-            column_red[i+x] |= Arial_Bold_14[6+char_count+start+i+char_width]<<6;
-            column_green[i+x] |= Arial_Bold_14[6+char_count+start+i+char_width]<<6;
+            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
+            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height -8)<<ledLine->y;
         }
     }
 
-    hilfsarray_to_normal();
+    ledLine->x += char_width + 1;
 
-    /* Bei Bedarf wieder an den Anfang gehen */
-    if(x + char_width +1 < 511)
-        x += char_width + 1;
-    else
-        x = 0;
+    return 1;
 }
 
-void putString(char *string, uint8_t color)
+void putString(char *string)
 {
-    memset(&column_red,0,sizeof(column_red));
-    memset(&column_green,0,sizeof(column_green));
+    static int color = COLOR_RED;
+
+    if(!string)
+        string = "null";
     while(*string)
     {
-        putChar(*string++,color);
+        if(*string == '\b')
+            color = COLOR_GREEN;
+        else if(*string == '\r')
+            color = COLOR_RED;
+        else if(*string == '\a')
+            color = COLOR_AMBER;
+        else if(!putChar(*string,color))
+            return;
+        string++;
     }
-    x = 0;
 }
 
 void led_matrix_print(char *msg) {
-    putString(msg,COLOR_AMBER);
+    if(!ledLine)
+    {
+        ledLine = (void*)malloc(sizeof(struct _ledLine));
+        allocateLedLine(ledLine, LINE_LENGTH);
+    }
+    putString(msg);
 }
 
-void clearScreen(void)
+int allocateLedLine(struct _ledLine *ledLine, int line_length)
 {
-    memset(&column_red,0,sizeof(column_red));
-    memset(&column_green,0,sizeof(column_green));
+	ledLine->column_red = calloc(sizeof(uint16_t), line_length);
+	if(!ledLine->column_red)
+		return 0;
+	ledLine->column_green = calloc(sizeof(uint16_t), line_length);
+	if(!ledLine->column_green)
+		return 0;
+	
+	ledLine->column_red_output = calloc(sizeof(uint16_t), line_length);
+	if(!ledLine->column_red_output)
+		return 0;
+	ledLine->column_green_output = calloc(sizeof(uint16_t), line_length);
+	if(!ledLine->column_green_output)
+		return 0;
+	
+
+	clearScreen(ledLine);
+
+	ledLine->x = 0;
+	ledLine->y = 1;
+	ledLine->shift_position = 0;
+	return 1;
+}
+
+static void clearScreen()
+{
+    memset(ledLine->column_red,0,sizeof(uint16_t)*LINE_LENGTH);
+    memset(ledLine->column_green,0,sizeof(uint16_t)*LINE_LENGTH);
+    
+    memset(ledLine->column_red_output,0,sizeof(uint16_t)*LINE_LENGTH);
+    memset(ledLine->column_green_output,0,sizeof(uint16_t)*LINE_LENGTH);
+
+    ledLine->x = 0;
+    ledLine->y = 1;
 }
 
 
-void shiftLeft(void)
+int shiftLeft()
 {
-    uint16_t buffer_red,buffer_green;
     int counter;
 
-    buffer_red = column_red[0];
-    buffer_green = column_green[0];
+    int scroll_length;
+    
+    if(ledLine->x + 11 > LINE_LENGTH)
+        scroll_length = LINE_LENGTH;
+    else
+        scroll_length = ledLine->x + 11;
 
-    for(counter=0;counter<511;counter++)
+    for(counter=0;counter< scroll_length - 1  ;counter++)
     {
-        column_red[counter] = column_red[counter+1];
-        column_green[counter] = column_green[counter+1];
+        if(ledLine->shift_position + counter > scroll_length - 1)
+        {
+            ledLine->column_red_output[counter] = ledLine->column_red[counter + ledLine->shift_position - (scroll_length)];
+            ledLine->column_green_output[counter] = ledLine->column_green[counter + ledLine->shift_position - (scroll_length)];
+        }
+        else
+        {
+            ledLine->column_red_output[counter] = ledLine->column_red[ledLine->shift_position+counter];
+            ledLine->column_green_output[counter] = ledLine->column_green[ledLine->shift_position+counter];
+        }
     }
 
-    column_red[511] = buffer_red;
-    column_green[511] = buffer_green;
-
-    if(position)
-        position -= 1;
+    ledLine->shift_position++;
+    
+    if(ledLine->shift_position > ledLine->x + 11)
+    {
+        ledLine->shift_position = 1;
+        return 0;
+    }
     else
-        position = 511;
-    hilfsarray_to_normal();
+        return 1;
 }
 
 void led_matrix_update()
 {
     int bytes_send;
-    int x,y,z;
-    memset(tmpGREEN,0,sizeof(uint16_t)*4*16);
-    memset(tmpRED,0,sizeof(uint16_t)*4*16);
+    int i,p,m;
 
-    for (x=0;x<4;x++) for (y=0;y<16;y++) for (z=0;z<16;z++){
-        tmpGREEN[x][y] |= ((GREEN[3-x][15-y] & (1 << z)) >> z) << (15-z);
-        tmpRED[x][y] |= ((RED[3-x][15-y] & (1 << z)) >> z) << (15-z);
+    memset(&RED,0,sizeof(RED));
+    memset(&GREEN,0,sizeof(GREEN));
+
+    for(m=0;m<4;m++) // for every module
+    {
+        for(i=0;i<16;i++) // for every row
+        {
+            for(p=0;p<16;p++) // for every single led in row
+            {
+#ifdef LED_HEADFIRST
+                /* was there a shift yet? if no, print the unshifted arrays */
+                if(ledLine->shift_position)
+                {
+                    RED[3-m][15-i] |= ((ledLine->column_red_output[15-p+m*16] & (1<<i))>>(i)<<p);
+                    GREEN[3-m][15-i] |= ((ledLine->column_green_output[15-p+m*16] & (1<<i))>>(i)<<p);
+                }
+                else
+                {
+                    RED[3-m][15-i] |= ((ledLine->column_red[15-p+m*16] & (1<<i))>>(i)<<p);
+                    GREEN[3-m][15-i] |= ((ledLine->column_green[15-p+m*16] & (1<<i))>>(i)<<p);
+                }
+#else
+                /* was there a shift yet? if no, print the unshifted arrays */
+                if(ledLine->shift_position)
+                {
+                    RED[m][i] |= ((ledLine->column_red_output[p+m*16] & (1<<i))>>(i)<<p);
+                    GREEN[m][i] |= ((ledLine->column_green_output[p+m*16] & (1<<i))>>(i)<<p);
+                }
+                else
+                {
+                    RED[m][i] |= ((ledLine->column_red[p+m*16] & (1<<i))>>(i)<<p);
+                    GREEN[m][i] |= ((ledLine->column_green[p+m*16] & (1<<i))>>(i)<<p);
+                }
+#endif
+
+            }
+        }
     }
-    bytes_send = send(client_sock, tmpRED, sizeof(RED),0);
-    bytes_send = send(client_sock, tmpGREEN, sizeof(GREEN),0);
+    bytes_send = send(client_sock, &RED, sizeof(RED),0);
+    bytes_send = send(client_sock, &GREEN, sizeof(GREEN),0);
+
 }
+

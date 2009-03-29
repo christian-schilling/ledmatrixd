@@ -1,11 +1,17 @@
+CFLAGS=`pkg-config --cflags glib-2.0` `pkg-config --cflags gobject-2.0` `pkg-config --cflags dbus-glib-1` -I.
+LDFLAGS=`pkg-config --libs glib-2.0` `pkg-config --libs gobject-2.0` `pkg-config --libs dbus-glib-1`
+VALAC=valac
 
-main : main.c led_matrix.o
-	gcc -o main main.c led_matrix.o -I. `pkg-config --libs --cflags glib-2.0` `pkg-config --libs --cflags gobject-2.0` `pkg-config --libs --cflags dbus-glib-1`
+main : main.o led_matrix.o
 
-
+main.o: main.c
 
 main.c : main.vala led_matrix.vapi
-	valac -C main.vala led_matrix.vapi --pkg dbus-glib-1
+	$(VALAC) -C main.vala led_matrix.vapi --pkg dbus-glib-1
 
 led_matrix.o : led_matrix.c led_matrix.h
-	gcc -c led_matrix.c
+
+.PHONY: clean
+
+clean:
+	$(RM) *.o main main.c
