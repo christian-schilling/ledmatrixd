@@ -1,11 +1,13 @@
 using GLib;
 using led_matrix;
+using Thread;
 
 [DBus (name = "net.initcrash.LedMatrix")]
 public class LedMatrix : Object {
 
     bool initialized;
     bool scrolling;
+    uint scroll_id;
     led_matrix.line ledLine;
 
     public LedMatrix() {
@@ -27,11 +29,12 @@ public class LedMatrix : Object {
     }
 
     public void ScrollLeft(int speed) {
-        if(!initialized || scrolling) return;
+        if(!initialized) return;
+        if(scrolling) {
+            GLib.Source->remove(scroll_id);
+        }
         scrolling = true;
-        GLib.Timeout->add(speed,() => {
-            if(!scrolling)
-                return false;
+        scroll_id = GLib.Timeout->add(speed,() => {
             led_matrix.shift_left(&ledLine);
             led_matrix.update(&ledLine);
         });
@@ -39,6 +42,7 @@ public class LedMatrix : Object {
 
     public void ScrollStop() {
         if(!initialized || !scrolling) return;
+        GLib.Source->remove(scroll_id);
         scrolling = false;
     }
     
