@@ -43,11 +43,14 @@ struct _ledLine
     int shift_position; /**< position of the output arrays */
 };
 
+typedef struct _ledLine led_matrix_line;
+
 extern int led_matrix_init(char *matrix_ip);
 extern void led_matrix_finish();
-extern void led_matrix_update();
-extern void led_matrix_print(char *msg);
-extern int led_matrix_shift_left();
+extern void led_matrix_update(struct _ledLine *ledLine);
+extern void led_matrix_print(char *msg, struct _ledLine *ledLine);
+extern int led_matrix_shift_left(struct _ledLine *ledLine);
+extern int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length);
 
 #endif
 

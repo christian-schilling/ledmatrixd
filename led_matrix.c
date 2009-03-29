@@ -35,7 +35,7 @@
 #include "arial_bold_14.h"
 
 static uint16_t charGetStart(char c);
-static void clearScreen();
+static void clearScreen(struct _ledLine *ledLine);
 
 /* Diese Arrays werden nur zur Uebertragung ans Modul genutzt */
 static uint16_t RED[4][16];
@@ -44,8 +44,6 @@ static uint16_t GREEN[4][16];
 static uint8_t *font = Arial_Bold_14;
 
 static int client_sock;
-
-static struct _ledLine *ledLine = NULL;
 
 int led_matrix_init(char *matrix_ip)
 {
@@ -73,8 +71,6 @@ int led_matrix_init(char *matrix_ip)
 
 void led_matrix_finish()
 {
-    if(ledLine)
-        free(ledLine);
     close(client_sock);
 }
 
@@ -99,7 +95,7 @@ static uint16_t charGetStart(char c)
     return position;
 }
 
-int putChar(char c, uint8_t color)
+int putChar(char c, uint8_t color, struct _ledLine *ledLine)
 {
 
     uint8_t first_char = font[4];
@@ -180,7 +176,7 @@ int putChar(char c, uint8_t color)
     return 1;
 }
 
-void putString(char *string)
+void putString(char *string, struct _ledLine *ledLine)
 {
     static int color = COLOR_RED;
 
@@ -194,22 +190,17 @@ void putString(char *string)
             color = COLOR_RED;
         else if(*string == '\a')
             color = COLOR_AMBER;
-        else if(!putChar(*string,color))
+        else if(!putChar(*string,color, ledLine))
             return;
         string++;
     }
 }
 
-void led_matrix_print(char *msg) {
-    if(!ledLine)
-    {
-        ledLine = (void*)malloc(sizeof(struct _ledLine));
-        allocateLedLine(ledLine, LINE_LENGTH);
-    }
-    putString(msg);
+void led_matrix_print(char *msg, struct _ledLine *ledLine) {
+    putString(msg, ledLine);
 }
 
-int allocateLedLine(struct _ledLine *ledLine, int line_length)
+int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length)
 {
 	ledLine->column_red = calloc(sizeof(uint16_t), line_length);
 	if(!ledLine->column_red)
@@ -234,7 +225,7 @@ int allocateLedLine(struct _ledLine *ledLine, int line_length)
 	return 1;
 }
 
-static void clearScreen()
+static void clearScreen(struct _ledLine *ledLine)
 {
     memset(ledLine->column_red,0,sizeof(uint16_t)*LINE_LENGTH);
     memset(ledLine->column_green,0,sizeof(uint16_t)*LINE_LENGTH);
@@ -247,7 +238,7 @@ static void clearScreen()
 }
 
 
-int led_matrix_shift_left()
+int led_matrix_shift_left(struct _ledLine *ledLine)
 {
     int counter;
 
@@ -283,7 +274,7 @@ int led_matrix_shift_left()
         return 1;
 }
 
-void led_matrix_update()
+void led_matrix_update(struct _ledLine *ledLine)
 {
     int bytes_send;
     int i,p,m;

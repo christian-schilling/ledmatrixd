@@ -5,6 +5,7 @@ using led_matrix;
 public class LedMatrix : Object {
 
     bool initialized;
+    led_matrix.line ledLine;
 
     public LedMatrix() {
         initialized = false;
@@ -12,20 +13,21 @@ public class LedMatrix : Object {
 
     public void Init (string matrix_ip) {
         if(!initialized) {
+            led_matrix.allocate_line(&ledLine,512);
             led_matrix.init(matrix_ip);
             initialized = true;
 
             GLib.Timeout->add(200,() => {
-                led_matrix.shift_left();
-                led_matrix.update();
+                led_matrix.shift_left(&ledLine);
+                led_matrix.update(&ledLine);
             });
         }
     }
 
     public void PrintStr (string msg) {
         if(!initialized) return;
-        led_matrix.print(msg);
-        led_matrix.update();
+        led_matrix.print(msg, &ledLine);
+        led_matrix.update(&ledLine);
     }
 }
 
