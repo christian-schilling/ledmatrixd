@@ -43,7 +43,7 @@ static uint16_t GREEN[4][16];
 static uint16_t tmpRED[4][16];
 static uint16_t tmpGREEN[4][16];
 
-/* Dies sind die eigentlich genutzten Arrays. Grund: 
+/* Dies sind die eigentlich genutzten Arrays. Grund:
  * einfachere Handhabung! Jedes Element entspricht genau einer Spalte
  */
 static uint16_t column_red[512];
@@ -214,7 +214,7 @@ void shiftLeft(void)
 {
     uint16_t buffer_red,buffer_green;
     int counter;
-    
+
     buffer_red = column_red[0];
     buffer_green = column_green[0];
 
