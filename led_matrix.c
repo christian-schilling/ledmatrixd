@@ -247,7 +247,7 @@ static void clearScreen()
 }
 
 
-int shiftLeft()
+int led_matrix_shift_left()
 {
     int counter;
 

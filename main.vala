@@ -14,6 +14,11 @@ public class LedMatrix : Object {
         if(!initialized) {
             led_matrix.init(matrix_ip);
             initialized = true;
+
+            GLib.Timeout->add(200,() => {
+                led_matrix.shift_left();
+                led_matrix.update();
+            });
         }
     }
 
@@ -43,6 +48,7 @@ void main () {
 
         // start server
         var server = new LedMatrix ();
+
 
         conn.register_object ("/net/initcrash/LedMatrix", server);
         loop.run ();

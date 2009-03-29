@@ -12,4 +12,7 @@ namespace led_matrix {
 
     [CCode (cname = "led_matrix_print", cheader_filename = "led_matrix.h")]
     public static void print(string msg);
+
+    [CCode (cname = "led_matrix_shift_left", cheader_filename = "led_matrix.h")]
+    public static int shift_left();
 }

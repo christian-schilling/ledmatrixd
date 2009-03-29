@@ -47,6 +47,7 @@ extern int led_matrix_init(char *matrix_ip);
 extern void led_matrix_finish();
 extern void led_matrix_update();
 extern void led_matrix_print(char *msg);
+extern int led_matrix_shift_left();
 
 #endif
 
