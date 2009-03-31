@@ -6,7 +6,6 @@ using Thread;
 public class LedMatrix : Object {
 
     bool initialized;
-    bool scrolling;
     uint scroll_id;
     led_matrix.line ledLine;
 
@@ -30,10 +29,10 @@ public class LedMatrix : Object {
 
     public void ScrollLeft(int speed) {
         if(!initialized) return;
-        if(scrolling) {
+
+        if(scroll_id != 0)
             GLib.Source->remove(scroll_id);
-        }
-        scrolling = true;
+
         scroll_id = GLib.Timeout->add(speed,() => {
             led_matrix.shift_left(&ledLine);
             led_matrix.update(&ledLine);
@@ -41,9 +40,9 @@ public class LedMatrix : Object {
     }
 
     public void ScrollStop() {
-        if(!initialized || !scrolling) return;
+        if(!initialized || scroll_id == 0) return;
         GLib.Source->remove(scroll_id);
-        scrolling = false;
+        scroll_id = 0;
     }
     
     public void ClearScreen() {
