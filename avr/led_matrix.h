@@ -33,4 +33,6 @@ extern void swap_buffers(void);
 
 extern uint16_t *backbuffer;
 
+//extern void draw_me_a_picture(void);
+
 #endif

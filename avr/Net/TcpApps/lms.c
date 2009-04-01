@@ -35,7 +35,8 @@ void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
     if(byte_counter == sizeof(uint16_t)*4*16*2)
     {
         byte_counter = 0;
-        swap_buffers();
+        //swap_buffers();
+        //draw_me_a_picture();
     }
 }
 

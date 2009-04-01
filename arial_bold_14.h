@@ -37,6 +37,9 @@
  */
 
 #include <inttypes.h>
+#ifdef F_CPU
+#include <avr/pgmspace.h>
+#endif
 
 #ifndef ARIAL_BOLD_14_H
 #define ARIAL_BOLD_14_H
@@ -44,7 +47,11 @@
 #define ARIAL_BOLD_14_WIDTH 10
 #define ARIAL_BOLD_14_HEIGHT 14
 
-static uint8_t Arial_Bold_14[] = {
+static uint8_t
+#ifdef F_CPU
+__attribute__ ((progmem))
+#endif
+Arial_Bold_14[] = {
     0x22, 0x08, // size
     0x0A, // width
     0x0E, // height

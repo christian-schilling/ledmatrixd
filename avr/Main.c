@@ -113,6 +113,8 @@ int main()
                 uip_arp_timer();
                 g_nPrescaler = 100;
             }
+
+            draw_me_a_picture();
         }
 
         /* Comment this out and your led-matrix will go up in flames */

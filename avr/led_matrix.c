@@ -126,3 +126,117 @@ void led_runner(void)
     LED_CONTROL_PORT |= (1<<LED_CLOCK);
     LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
 }
+
+///////////////////////////////////////////////7
+/////////////////////////////////////////////////
+
+#define LED_HEADFIRST
+#ifdef LED_HEADFIRST
+#define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((16*4-1-(x))/16)*16+(15-(y))) |= 1 << ((16*4-1-(x))%16)
+#else
+#define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((x)/16)*16+(y)) |= 1 << ((x)%16)
+#endif
+
+#include "../arial_bold_14.h"
+PGM_P font = Arial_Bold_14;
+#define COLOR_RED 0
+#define COLOR_GREEN 1
+#define COLOR_AMBER 2
+
+PGM_P get_char_start(char c)
+{
+    uint8_t first_char = pgm_read_byte(font+4);
+    uint8_t char_height = pgm_read_byte(font+3);
+    uint8_t char_count = pgm_read_byte(font+5);
+
+    uint8_t factor = 1;
+
+    if(char_height > 8)
+        factor = 2;
+
+    uint8_t counter;
+    uint16_t position = 0;
+
+    for(counter=0;counter<(c-first_char);counter++)
+        position += pgm_read_byte(font+6+counter)*factor;
+
+    return font+(6+char_count+position);
+}
+
+
+int16_t putChar(uint16_t *buffer, char c,int16_t offset_x, int16_t offset_y)
+{
+    uint8_t first_char = pgm_read_byte(font+4);
+    uint8_t char_count = pgm_read_byte(font+5);
+    uint8_t char_width;
+    uint8_t char_height = pgm_read_byte(font+3);
+
+    PGM_P char_start = get_char_start(c);
+
+    int16_t x,y;
+
+    /* if char is not in our font just leave */
+    if(c < first_char || c > (first_char + char_count))
+        return 0;
+
+    /* Leerzeichen abfangen */
+    if(c == ' ')
+        return 4;
+
+    char_width = pgm_read_byte(font+6+c-first_char);
+
+    /* box level clipping */
+    //if((ledLine->x + char_width) >= LINE_LENGTH-50)
+    //    return 0;
+
+    for (x=0;x<char_width;x++) for (y=0;y<char_height;y++)
+    if (pgm_read_byte(char_start+x+(y/8)*char_width) & (1 << (y/8)*(8-char_height%8) << (y%8)))
+    if (0 <= x+offset_x && x+offset_x < 4*16) /* pixel level clipping */
+    if (0 <= y+offset_y && y+offset_y < 16)   /* pixel level clipping */
+        PUT_PIXEL(buffer,x+offset_x,y+offset_y);
+
+    return char_width + 1;
+}
+
+int16_t putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int16_t x, int16_t y)
+{
+    static int color = COLOR_RED;
+    int16_t width = 0;
+
+    if(!string)
+        string = "null";
+    while(*string)
+    {
+        if(*string == '\b')
+            color = COLOR_GREEN;
+        else if(*string == '\r')
+            color = COLOR_RED;
+        else if(*string == '\a')
+            color = COLOR_AMBER;
+        else if(color == COLOR_RED)
+            width += putChar(buffer_red,*string,x+width,y);
+        else if(color == COLOR_GREEN)
+            width += putChar(buffer_green,*string,x+width,y);
+        else if(color == COLOR_AMBER){
+            putChar(buffer_green,*string,x+width,y);
+            width += putChar(buffer_red,*string,x+width,y);
+        }
+        string++;
+    }
+
+    return width;
+}
+
+void draw_me_a_picture()
+{
+    static x = 0;
+    memset(backbuffer,0,sizeof(uint16_t)*16*4*2);
+    PUT_PIXEL(backbuffer,(1+x)%64,1);
+    PUT_PIXEL(backbuffer+16*4,(10+x)%64,5);
+    PUT_PIXEL(backbuffer,(20+x)%64,1);
+    PUT_PIXEL(backbuffer,(30+x)%64,5);
+    x = (x+1)%(100);
+    putString(backbuffer,backbuffer+16*4,"Hallo \bWelt",x,1);
+
+    swap_buffers();
+}
