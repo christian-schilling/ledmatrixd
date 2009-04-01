@@ -3,6 +3,8 @@
 *.elf
 *.lss
 *.swp
+*.eep
+*.map
 HttpD._c
 README.txt
 Session.vim
