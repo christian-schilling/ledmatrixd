@@ -10,6 +10,7 @@ public class LedMatrix : Object {
     led_matrix.line ledLine;
     string cur_message;
     int pos_x;
+    int scroll_speed;
 
     public LedMatrix() {
         initialized = false;
@@ -28,34 +29,35 @@ public class LedMatrix : Object {
     public void PrintStr (string msg) {
         if(!initialized) return;
         cur_message = msg;
-        led_matrix.clear_screen(&ledLine);
-        led_matrix.print(cur_message,&ledLine);
-        led_matrix.update(&ledLine);
     }
 
     public void ScrollLeft(int speed) {
         if(!initialized) return;
+        scroll_speed = speed;
 
         if(scroll_id != 0)
             GLib.Source->remove(scroll_id);
 
-        scroll_id = GLib.Timeout->add(speed,() => {
-            ledLine.x--;
-            if (ledLine.x < -512) ledLine.x += 512;
+        scroll_id = GLib.Timeout->add(scroll_speed,() => {
+            int16 width;
             led_matrix.clear_screen(&ledLine);
-            led_matrix.print(cur_message,&ledLine);
+            width = led_matrix.print(cur_message,&ledLine);
             led_matrix.update(&ledLine);
+            if(scroll_speed != 0)
+                ledLine.x--;
+            if (ledLine.x <= -width )
+                ledLine.x = 4*16;
         });
     }
 
     public void ScrollStop() {
         if(!initialized || scroll_id == 0) return;
-        GLib.Source->remove(scroll_id);
-        scroll_id = 0;
+        ScrollLeft(0);
     }
 
     public void ClearScreen() {
         cur_message = "";
+        ScrollLeft(0);
     }
 }
 

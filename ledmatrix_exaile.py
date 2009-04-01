@@ -20,7 +20,6 @@ def initialize():
     obj = conn.get_object("net.initcrash.LedMatrix","/net/initcrash/LedMatrix")
     led_matrix = dbus.Interface(obj,dbus_interface="net.initcrash.LedMatrix")
     led_matrix.Init("192.168.2.10")
-    led_matrix.ClearScreen()
     led_matrix.PrintStr("Exaile")
     led_matrix.ScrollLeft(30)
     CONNS.connect(APP.player, 'play-track', play_track)
@@ -30,5 +29,4 @@ def destroy():
     CONNS.disconnect_all()
 
 def play_track(exaile, track):
-    led_matrix.ClearScreen()
     led_matrix.PrintStr("\a%s \rby %s \bon %s" % (track.title, track.artist, track.album))

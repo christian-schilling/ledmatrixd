@@ -95,7 +95,7 @@ static uint8_t *get_char_start(char c)
 }
 
 
-int8_t putChar(uint16_t *buffer, char c,int8_t offset_x, int8_t offset_y)
+int16_t putChar(uint16_t *buffer, char c,int16_t offset_x, int16_t offset_y)
 {
     uint8_t first_char = font[4];
     uint8_t char_count = font[5];
@@ -104,7 +104,7 @@ int8_t putChar(uint16_t *buffer, char c,int8_t offset_x, int8_t offset_y)
 
     uint8_t *char_start = get_char_start(c);
 
-    int8_t x,y;
+    int16_t x,y;
 
     /* if char is not in our font just leave */
     if(c < first_char || c > (first_char + char_count))
@@ -129,9 +129,10 @@ int8_t putChar(uint16_t *buffer, char c,int8_t offset_x, int8_t offset_y)
     return char_width + 1;
 }
 
-void putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int8_t x, int8_t y)
+int16_t putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int16_t x, int16_t y)
 {
     static int color = COLOR_RED;
+    int16_t width = 0;
 
     if(!string)
         string = "null";
@@ -144,19 +145,21 @@ void putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int8_t
         else if(*string == '\a')
             color = COLOR_AMBER;
         else if(color == COLOR_RED)
-            x += putChar(buffer_red,*string,x,y);
+            width += putChar(buffer_red,*string,x+width,y);
         else if(color == COLOR_GREEN)
-            x += putChar(buffer_green,*string,x,y);
+            width += putChar(buffer_green,*string,x+width,y);
         else if(color == COLOR_AMBER){
-            putChar(buffer_green,*string,x,y);
-            x += putChar(buffer_red,*string,x,y);
+            putChar(buffer_green,*string,x+width,y);
+            width += putChar(buffer_red,*string,x+width,y);
         }
         string++;
     }
+
+    return width;
 }
 
-void led_matrix_print(char *msg, struct _ledLine *ledLine) {
-    putString(ledLine->buffer_red,ledLine->buffer_green,msg,ledLine->x,ledLine->y);
+int16_t led_matrix_print(char *msg, struct _ledLine *ledLine) {
+    return putString(ledLine->buffer_red,ledLine->buffer_green,msg,ledLine->x,ledLine->y);
 }
 
 int led_matrix_allocate_line(struct _ledLine *ledLine)

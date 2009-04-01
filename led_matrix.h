@@ -36,8 +36,8 @@ struct _ledLine
 {
     uint16_t *buffer_green;
     uint16_t *buffer_red;
-    int8_t x; /**< current x position */
-    int8_t y; /**< current y position */
+    int16_t x; /**< current x position */
+    int16_t y; /**< current y position */
 };
 
 typedef struct _ledLine led_matrix_line;
@@ -45,7 +45,7 @@ typedef struct _ledLine led_matrix_line;
 extern int led_matrix_init(char *matrix_ip);
 extern void led_matrix_finish();
 extern void led_matrix_update(struct _ledLine *ledLine);
-extern void led_matrix_print(char *msg, struct _ledLine *ledLine);
+extern int16_t led_matrix_print(char *msg, struct _ledLine *ledLine);
 extern int led_matrix_shift_left(struct _ledLine *ledLine);
 extern int led_matrix_allocate_line(struct _ledLine *ledLine);
 extern void led_matrix_clear_screen(struct _ledLine *ledLine);
