@@ -8,9 +8,13 @@ public class LedMatrix : Object {
     bool initialized;
     uint scroll_id;
     led_matrix.line ledLine;
+    string cur_message;
+    int pos_x;
 
     public LedMatrix() {
         initialized = false;
+        pos_x = 0;
+        cur_message = "";
     }
 
     public void Init (string matrix_ip) {
@@ -23,7 +27,9 @@ public class LedMatrix : Object {
 
     public void PrintStr (string msg) {
         if(!initialized) return;
-        led_matrix.print(msg, &ledLine);
+        cur_message = msg;
+        led_matrix.clear_screen(&ledLine);
+        led_matrix.print(cur_message,&ledLine);
         led_matrix.update(&ledLine);
     }
 
@@ -37,6 +43,7 @@ public class LedMatrix : Object {
             ledLine.x--;
             if (ledLine.x < -512) ledLine.x += 512;
             led_matrix.clear_screen(&ledLine);
+            led_matrix.print(cur_message,&ledLine);
             led_matrix.update(&ledLine);
         });
     }
@@ -46,10 +53,9 @@ public class LedMatrix : Object {
         GLib.Source->remove(scroll_id);
         scroll_id = 0;
     }
-    
+
     public void ClearScreen() {
-        if(!initialized) return;
-        led_matrix.clear_screen(&ledLine);
+        cur_message = "";
     }
 }
 

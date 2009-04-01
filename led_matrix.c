@@ -156,7 +156,7 @@ void putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int8_t
 }
 
 void led_matrix_print(char *msg, struct _ledLine *ledLine) {
-    //putString(msg, ledLine);
+    putString(ledLine->buffer_red,ledLine->buffer_green,msg,ledLine->x,ledLine->y);
 }
 
 int led_matrix_allocate_line(struct _ledLine *ledLine)
@@ -185,8 +185,6 @@ void led_matrix_clear_screen(struct _ledLine *ledLine)
 void led_matrix_update(struct _ledLine *ledLine)
 {
     int bytes_send;
-
-    putString(ledLine->buffer_red,ledLine->buffer_green,"\aa\bb\rr",ledLine->x,ledLine->y);
 
     bytes_send = send(client_sock, ledLine->buffer_red, sizeof(uint16_t)*4*16,0);
     bytes_send = send(client_sock, ledLine->buffer_green, sizeof(uint16_t)*4*16,0);
