@@ -34,11 +34,12 @@
 #include "led_matrix.h"
 #include "arial_bold_14.h"
 
-static uint16_t charGetStart(char c);
+#ifdef LED_HEADFIRST
+#define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((16*4-1-(x))/16)*16+(15-(y))) |= 1 << ((16*4-1-(x))%16)
+#else
+#define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((x)/16)*16+(y)) |= 1 << ((x)%16)
+#endif
 
-/* Diese Arrays werden nur zur Uebertragung ans Modul genutzt */
-static uint16_t RED[4][16];
-static uint16_t GREEN[4][16];
 
 static uint8_t *font = Arial_Bold_14;
 
@@ -73,10 +74,11 @@ void led_matrix_finish()
     close(client_sock);
 }
 
-static uint16_t charGetStart(char c)
+static uint8_t *get_char_start(char c)
 {
     uint8_t first_char = font[4];
     uint8_t char_height = font[3];
+    uint8_t char_count = font[5];
 
     uint8_t factor = 1;
 
@@ -87,95 +89,47 @@ static uint16_t charGetStart(char c)
     uint16_t position = 0;
 
     for(counter=0;counter<(c-first_char);counter++)
-    {
         position += font[6+counter]*factor;
-    }
 
-    return position;
+    return font+(6+char_count+position);
 }
 
-int putChar(char c, uint8_t color, struct _ledLine *ledLine)
-{
 
+int8_t putChar(uint16_t *buffer, char c,int8_t offset_x, int8_t offset_y)
+{
     uint8_t first_char = font[4];
     uint8_t char_count = font[5];
     uint8_t char_width;
     uint8_t char_height = font[3];
 
-    uint16_t start;
+    uint8_t *char_start = get_char_start(c);
 
-    uint8_t i;
-
-    if(c == '\n')
-    {
-        ledLine->x = 0;
-        ledLine->y = 8;
-        return 1;
-    }
+    int8_t x,y;
 
     /* if char is not in our font just leave */
     if(c < first_char || c > (first_char + char_count))
-        return 1;
-    
-    /* Leerzeichen abfangen */
-    if(c == 32)
-        char_width = 4;
-    else
-    {
-        char_width = font[6+c-first_char];
-        start = charGetStart(c);
-    }
-    
-    if((ledLine->x + char_width) >= LINE_LENGTH-50)
         return 0;
 
+    /* Leerzeichen abfangen */
     if(c == ' ')
-    {
-        ledLine->x += 4;
-        return 1;
-    }
+        return 4;
 
-    for(i=0;i<char_width;i++)
-    {
-        if(color == COLOR_RED)
-        {
-            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
-        }
-        else if(color == COLOR_GREEN)
-        {
-            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
-        }
-        else if(color == COLOR_AMBER)
-        {
-            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
-            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i]<<ledLine->y;
-        }
-    }
-    /* unteren Teil der Zeichen schreiben (noch nicht dynamisch fuer verschiedene Schriftgroessen) */
-    for(i=0;i<char_width;i++)
-    {
-        if(color == COLOR_RED)
-        {
-            /* Man erklaere mir was ich hier geschrieben. Aber funktionieren tuts! :-) */
-            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
-        }
-        else if(color == COLOR_GREEN)
-        {
-            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
-        }
-        else if(color == COLOR_AMBER)
-        {
-            ledLine->column_red[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height - 8)<<ledLine->y;
-            ledLine->column_green[i+ledLine->x] |= font[6+char_count+start+i+char_width]<<(char_height -8)<<ledLine->y;
-        }
-    }
+    char_width = font[6+c-first_char];
 
-    ledLine->x += char_width + 1;
+    /* box level clipping */
+    //if((ledLine->x + char_width) >= LINE_LENGTH-50)
+    //    return 0;
 
-    return 1;
+    for (x=0;x<char_width;x++) for (y=0;y<char_height;y++)
+    if (*(char_start+x+(y/8)*char_width) & (1 << (y/8)*(8-char_height%8) << (y%8)))
+    if (0 <= x+offset_x && x+offset_x < 4*16) /* pixel level clipping */
+    if (0 <= y+offset_y && y+offset_y < 16)   /* pixel level clipping */
+        PUT_PIXEL(buffer,x+offset_x,y+offset_y);
+
+    return char_width + 1;
 }
 
-void putString(char *string, struct _ledLine *ledLine)
+void putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int8_t x, int8_t y)
 {
     static int color = COLOR_RED;
 
@@ -189,135 +143,52 @@ void putString(char *string, struct _ledLine *ledLine)
             color = COLOR_RED;
         else if(*string == '\a')
             color = COLOR_AMBER;
-        else if(!putChar(*string,color, ledLine))
-            return;
+        else if(color == COLOR_RED)
+            x += putChar(buffer_red,*string,x,y);
+        else if(color == COLOR_GREEN)
+            x += putChar(buffer_green,*string,x,y);
+        else if(color == COLOR_AMBER){
+            putChar(buffer_green,*string,x,y);
+            x += putChar(buffer_red,*string,x,y);
+        }
         string++;
     }
 }
 
 void led_matrix_print(char *msg, struct _ledLine *ledLine) {
-    putString(msg, ledLine);
+    //putString(msg, ledLine);
 }
 
-int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length)
+int led_matrix_allocate_line(struct _ledLine *ledLine)
 {
-	ledLine->column_red = calloc(sizeof(uint16_t), line_length);
-	if(!ledLine->column_red)
-		return 0;
-	ledLine->column_green = calloc(sizeof(uint16_t), line_length);
-	if(!ledLine->column_green)
-		return 0;
-	
-	ledLine->column_red_output = calloc(sizeof(uint16_t), line_length);
-	if(!ledLine->column_red_output)
-		return 0;
-	ledLine->column_green_output = calloc(sizeof(uint16_t), line_length);
-	if(!ledLine->column_green_output)
-		return 0;
-	
+    ledLine->buffer_red = calloc(sizeof(uint16_t), 4*16);
+    if(!ledLine->buffer_red)
+        return 0;
+    ledLine->buffer_green = calloc(sizeof(uint16_t), 4*16);
+    if(!ledLine->buffer_green)
+        return 0;
 
-	led_matrix_clear_screen(ledLine);
+    ledLine->x = 0;
+    ledLine->y = 1;
 
-	ledLine->x = 0;
-	ledLine->y = 1;
-	ledLine->shift_position = 0;
-	return 1;
+    led_matrix_clear_screen(ledLine);
+
+    return 1;
 }
 
 void led_matrix_clear_screen(struct _ledLine *ledLine)
 {
-    memset(ledLine->column_red,0,sizeof(uint16_t)*LINE_LENGTH);
-    memset(ledLine->column_green,0,sizeof(uint16_t)*LINE_LENGTH);
-    
-    memset(ledLine->column_red_output,0,sizeof(uint16_t)*LINE_LENGTH);
-    memset(ledLine->column_green_output,0,sizeof(uint16_t)*LINE_LENGTH);
-
-    ledLine->x = 0;
-    ledLine->y = 1;
-}
-
-
-int led_matrix_shift_left(struct _ledLine *ledLine)
-{
-    int counter;
-
-    int scroll_length;
-    
-    if(ledLine->x + 11 > LINE_LENGTH)
-        scroll_length = LINE_LENGTH;
-    else
-        scroll_length = ledLine->x + 11;
-
-    for(counter=0;counter< scroll_length - 1  ;counter++)
-    {
-        if(ledLine->shift_position + counter > scroll_length - 1)
-        {
-            ledLine->column_red_output[counter] = ledLine->column_red[counter + ledLine->shift_position - (scroll_length)];
-            ledLine->column_green_output[counter] = ledLine->column_green[counter + ledLine->shift_position - (scroll_length)];
-        }
-        else
-        {
-            ledLine->column_red_output[counter] = ledLine->column_red[ledLine->shift_position+counter];
-            ledLine->column_green_output[counter] = ledLine->column_green[ledLine->shift_position+counter];
-        }
-    }
-
-    ledLine->shift_position++;
-    
-    if(ledLine->shift_position > ledLine->x + 11)
-    {
-        ledLine->shift_position = 1;
-        return 0;
-    }
-    else
-        return 1;
+    memset(ledLine->buffer_red,0,sizeof(uint16_t)*4*16);
+    memset(ledLine->buffer_green,0,sizeof(uint16_t)*4*16);
 }
 
 void led_matrix_update(struct _ledLine *ledLine)
 {
     int bytes_send;
-    int i,p,m;
 
-    memset(&RED,0,sizeof(RED));
-    memset(&GREEN,0,sizeof(GREEN));
+    putString(ledLine->buffer_red,ledLine->buffer_green,"\aa\bb\rr",ledLine->x,ledLine->y);
 
-    for(m=0;m<4;m++) // for every module
-    {
-        for(i=0;i<16;i++) // for every row
-        {
-            for(p=0;p<16;p++) // for every single led in row
-            {
-#ifdef LED_HEADFIRST
-                /* was there a shift yet? if no, print the unshifted arrays */
-                if(ledLine->shift_position)
-                {
-                    RED[3-m][15-i] |= ((ledLine->column_red_output[15-p+m*16] & (1<<i))>>(i)<<p);
-                    GREEN[3-m][15-i] |= ((ledLine->column_green_output[15-p+m*16] & (1<<i))>>(i)<<p);
-                }
-                else
-                {
-                    RED[3-m][15-i] |= ((ledLine->column_red[15-p+m*16] & (1<<i))>>(i)<<p);
-                    GREEN[3-m][15-i] |= ((ledLine->column_green[15-p+m*16] & (1<<i))>>(i)<<p);
-                }
-#else
-                /* was there a shift yet? if no, print the unshifted arrays */
-                if(ledLine->shift_position)
-                {
-                    RED[m][i] |= ((ledLine->column_red_output[p+m*16] & (1<<i))>>(i)<<p);
-                    GREEN[m][i] |= ((ledLine->column_green_output[p+m*16] & (1<<i))>>(i)<<p);
-                }
-                else
-                {
-                    RED[m][i] |= ((ledLine->column_red[p+m*16] & (1<<i))>>(i)<<p);
-                    GREEN[m][i] |= ((ledLine->column_green[p+m*16] & (1<<i))>>(i)<<p);
-                }
-#endif
-
-            }
-        }
-    }
-    bytes_send = send(client_sock, &RED, sizeof(RED),0);
-    bytes_send = send(client_sock, &GREEN, sizeof(GREEN),0);
-
+    bytes_send = send(client_sock, ledLine->buffer_red, sizeof(uint16_t)*4*16,0);
+    bytes_send = send(client_sock, ledLine->buffer_green, sizeof(uint16_t)*4*16,0);
 }
 

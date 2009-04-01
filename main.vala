@@ -15,7 +15,7 @@ public class LedMatrix : Object {
 
     public void Init (string matrix_ip) {
         if(!initialized) {
-            led_matrix.allocate_line(&ledLine,512);
+            led_matrix.allocate_line(&ledLine);
             led_matrix.init(matrix_ip);
             initialized = true;
         }
@@ -34,7 +34,9 @@ public class LedMatrix : Object {
             GLib.Source->remove(scroll_id);
 
         scroll_id = GLib.Timeout->add(speed,() => {
-            led_matrix.shift_left(&ledLine);
+            ledLine.x--;
+            if (ledLine.x < -512) ledLine.x += 512;
+            led_matrix.clear_screen(&ledLine);
             led_matrix.update(&ledLine);
         });
     }

@@ -34,13 +34,10 @@
  */
 struct _ledLine
 {
-    uint16_t *column_red; /**< the red part of the string will be put here */
-    uint16_t *column_green; /**< the green part of the string will be put here */
-    uint16_t *column_red_output; /**< red part of the string, possibly shifted */
-    uint16_t *column_green_output; /**< green part of the string, possibly shifted */
-    int x; /**< current x position */
-    int y; /**< current y position */
-    int shift_position; /**< position of the output arrays */
+    uint16_t *buffer_green;
+    uint16_t *buffer_red;
+    int8_t x; /**< current x position */
+    int8_t y; /**< current y position */
 };
 
 typedef struct _ledLine led_matrix_line;
@@ -50,7 +47,7 @@ extern void led_matrix_finish();
 extern void led_matrix_update(struct _ledLine *ledLine);
 extern void led_matrix_print(char *msg, struct _ledLine *ledLine);
 extern int led_matrix_shift_left(struct _ledLine *ledLine);
-extern int led_matrix_allocate_line(struct _ledLine *ledLine, int line_length);
+extern int led_matrix_allocate_line(struct _ledLine *ledLine);
 extern void led_matrix_clear_screen(struct _ledLine *ledLine);
 
 #endif

@@ -15,21 +15,15 @@ namespace led_matrix {
 
     [CCode (cname = "led_matrix_line", cheader_filename = "led_matrix.h")]
     public static struct line{
-        uint16 *column_red; /**< the red part of the string will be put here */
-        uint16 *column_green; /**< the green part of the string will be put here */
-        uint16 *column_red_output; /**< red part of the string, possibly shifted */
-        uint16 *column_green_output; /**< green part of the string, possibly shifted */
-        int x; /**< current x position */
-        int y; /**< current y position */
-        int shift_position; /**< position of the output arrays */
+        uint16 *buffer_red; /**< the red part of the string will be put here */
+        uint16 *buffer_green; /**< the green part of the string will be put here */
+        public int x; /**< current x position */
+        public int y; /**< current y position */
     }
-    
-    [CCode (cname = "led_matrix_allocate_line", cheader_filename = "led_matrix.h")]
-    public static int allocate_line(line *ledLine, int line_length);
 
-    [CCode (cname = "led_matrix_shift_left", cheader_filename = "led_matrix.h")]
-    public static int shift_left(line *ledLine);
-    
+    [CCode (cname = "led_matrix_allocate_line", cheader_filename = "led_matrix.h")]
+    public static int allocate_line(line *ledLine);
+
     [CCode (cname = "led_matrix_clear_screen", cheader_filename = "led_matrix.h")]
     public static int clear_screen(line *ledLine);
 }
