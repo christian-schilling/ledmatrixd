@@ -21,13 +21,15 @@
 #define __LMS_H__
 
 #include <inttypes.h>
+#include "../../../common/protocol.h"
 
 #define PORT_LMS 9328
 
 struct tLMS
 {
-    uint8_t toggler;
     uint16_t byte_counter;
+    LedNetMessage cur_message;
+    uint8_t has_message;
 };
 
 void LMSInit(void);

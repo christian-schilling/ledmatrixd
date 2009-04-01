@@ -33,6 +33,7 @@
 
 #include "led_matrix.h"
 #include "arial_bold_14.h"
+#include "common/protocol.h"
 
 #ifdef LED_HEADFIRST
 #define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((16*4-1-(x))/16)*16+(15-(y))) |= 1 << ((16*4-1-(x))%16)
@@ -188,7 +189,12 @@ void led_matrix_clear_screen(struct _ledLine *ledLine)
 void led_matrix_update(struct _ledLine *ledLine)
 {
     int bytes_send;
+    LedNetMessage message;
+    message.version = 1;
+    message.func_id = LED_NET_FUNC_RAW_DATA;
+    message.byte_count = sizeof(uint16_t)*4*16*2;
 
+    bytes_send = send(client_sock, &message, sizeof(LedNetMessage),0);
     bytes_send = send(client_sock, ledLine->buffer_red, sizeof(uint16_t)*4*16,0);
     bytes_send = send(client_sock, ledLine->buffer_green, sizeof(uint16_t)*4*16,0);
 }

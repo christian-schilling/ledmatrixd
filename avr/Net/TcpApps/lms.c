@@ -25,6 +25,23 @@
 #include "lms.h"
 #include "../uip/uip.h"
 #include "../../led_matrix.h"
+#include "../../../common/protocol.h"
+
+void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
+{
+    static byte_counter = 0;
+
+    *(((uint8_t*)backbuffer)+(byte_counter++)) = data_byte;
+    if(byte_counter == sizeof(uint16_t)*4*16*2)
+    {
+        byte_counter = 0;
+        swap_buffers();
+    }
+}
+
+LedNetFunc LedNetFuncTable[] = {
+    LedNetFuncRawData
+};
 
 void LMSInit()
 {
@@ -41,16 +58,30 @@ void LMSCall(   uint8_t* pBuffer,
     if(uip_connected())
     {
         pSocket->byte_counter = 0;
+        pSocket->has_message = 0;
     }
     else if(uip_newdata() || uip_acked())
     {
         for(counter=0;counter < nBytes; counter++)
         {
-            *(((uint8_t*)backbuffer)+(pSocket->byte_counter++)) = *pBuffer++;
-            if(pSocket->byte_counter == 256)
+            if(!pSocket->has_message)
             {
-                swap_buffers();
-                pSocket->byte_counter = 0;
+                *(((uint8_t*)&(pSocket->cur_message))+(pSocket->byte_counter++)) = *pBuffer++;
+                if(pSocket->byte_counter == sizeof(LedNetMessage))
+                {
+                    pSocket->has_message = 1;
+                    pSocket->byte_counter = 0;
+                }
+            }
+            else
+            {
+                LedNetFuncTable[pSocket->cur_message.func_id](&(pSocket->cur_message),*pBuffer++);
+                pSocket->byte_counter++;
+                if(pSocket->byte_counter == pSocket->cur_message.byte_count)
+                {
+                    pSocket->has_message = 0;
+                    pSocket->byte_counter = 0;
+                }
             }
         }
     }
