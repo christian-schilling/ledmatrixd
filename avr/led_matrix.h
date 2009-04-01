@@ -20,7 +20,7 @@
 #ifndef __LED_led_H__
 #define __LED_led_H__
 
-/* ------------------ VERY VERY VERY important! --------------- 
+/* ------------------ VERY VERY VERY important! ---------------
  *
  * Continuously call led_runner or your led-matrix will be burned!
  *

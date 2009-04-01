@@ -28,31 +28,31 @@
 
 void LMSInit()
 {
-	uip_listen(HTONS(PORT_LMS));
+    uip_listen(HTONS(PORT_LMS));
 }
 
-void LMSCall(	uint8_t* pBuffer,
-				uint16_t nBytes,
-				struct tLMS* pSocket)
+void LMSCall(   uint8_t* pBuffer,
+                uint16_t nBytes,
+                struct tLMS* pSocket)
 {
-	uint16_t counter;
+    uint16_t counter;
 
-	/* wird nur direkt nach connect ausgefuehrt */
-	if(uip_connected())
-	{
-		pSocket->byte_counter = 0;
-	}
-	else if(uip_newdata() || uip_acked())
-	{
-		for(counter=0;counter < nBytes; counter++)
-		{
-			*(((uint8_t*)backbuffer)+(pSocket->byte_counter++)) = *pBuffer++;
-			if(pSocket->byte_counter == 256)
-			{
-				swap_buffers();
-				pSocket->byte_counter = 0;
-			}
-		}
-	}
+    /* wird nur direkt nach connect ausgefuehrt */
+    if(uip_connected())
+    {
+        pSocket->byte_counter = 0;
+    }
+    else if(uip_newdata() || uip_acked())
+    {
+        for(counter=0;counter < nBytes; counter++)
+        {
+            *(((uint8_t*)backbuffer)+(pSocket->byte_counter++)) = *pBuffer++;
+            if(pSocket->byte_counter == 256)
+            {
+                swap_buffers();
+                pSocket->byte_counter = 0;
+            }
+        }
+    }
 }
 

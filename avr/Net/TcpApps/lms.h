@@ -26,14 +26,14 @@
 
 struct tLMS
 {
-	uint8_t toggler;
-	uint16_t byte_counter;
+    uint8_t toggler;
+    uint16_t byte_counter;
 };
 
 void LMSInit(void);
-void LMSCall(	uint8_t* pBuffer,
-				uint16_t nBytes,
-				struct tLMS* pSocket);
+void LMSCall(   uint8_t* pBuffer,
+                uint16_t nBytes,
+                struct tLMS* pSocket);
 
 #endif
 

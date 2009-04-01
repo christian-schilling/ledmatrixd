@@ -51,81 +51,78 @@ uint16_t *backbuffer;
 
 void swap_buffers(void)
 {
-	uint16_t *tmp;
-	tmp = backbuffer;
-	backbuffer = frontbuffer;
-	frontbuffer = tmp;
+    uint16_t *tmp;
+    tmp = backbuffer;
+    backbuffer = frontbuffer;
+    frontbuffer = tmp;
 }
 
 void led_update(void)
 {
-	uint8_t counter,counter2,i;
-	
-	/* reset */
-	LED_CONTROL_PORT |= (1<<LED_RESET);
-	LED_CONTROL_PORT &= ~(1<<LED_RESET);
+    uint8_t counter,counter2,i;
 
-	uint16_t *buf_ptr = frontbuffer;
-	for(i=0;i<4;i++)
-	{
-		LED_SELECT_PORT |= (1<<i);
-		for(counter2 = 0;counter2 < 16;counter2++)
-		{
-	//		LED_CONTROL_PORT |= (1<<LED_BRIGHT);
-	//		LED_CONTROL_PORT |=  (1<<LED_BRIGHT);
-			for(counter = 0; counter < 16; counter++)
-			{
-				if((*buf_ptr>>counter)&1)
-					LED_CONTROL_PORT |= (1<<LED_RED);
-				else
-					LED_CONTROL_PORT &= ~(1<<LED_RED);
-				if((*(buf_ptr+16*4)>>counter)&1)
-					LED_CONTROL_PORT |= (1<<LED_GREEN);
-				else
-					LED_CONTROL_PORT &= ~(1<<LED_GREEN);
-				LED_CONTROL_PORT |= (1<<LED_CLOCK);
-				LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
-			}
-			buf_ptr++;
-	//		LED_CONTROL_PORT &= ~(1<<LED_BRIGHT);
-		}
-		LED_SELECT_PORT &= ~(1<<i);
-	}
+    /* reset */
+    LED_CONTROL_PORT |= (1<<LED_RESET);
+    LED_CONTROL_PORT &= ~(1<<LED_RESET);
+
+    uint16_t *buf_ptr = frontbuffer;
+    for(i=0;i<4;i++)
+    {
+        LED_SELECT_PORT |= (1<<i);
+        for(counter2 = 0;counter2 < 16;counter2++)
+        {
+    //      LED_CONTROL_PORT |= (1<<LED_BRIGHT);
+    //      LED_CONTROL_PORT |=  (1<<LED_BRIGHT);
+            for(counter = 0; counter < 16; counter++)
+            {
+                if((*buf_ptr>>counter)&1)
+                    LED_CONTROL_PORT |= (1<<LED_RED);
+                else
+                    LED_CONTROL_PORT &= ~(1<<LED_RED);
+                if((*(buf_ptr+16*4)>>counter)&1)
+                    LED_CONTROL_PORT |= (1<<LED_GREEN);
+                else
+                    LED_CONTROL_PORT &= ~(1<<LED_GREEN);
+                LED_CONTROL_PORT |= (1<<LED_CLOCK);
+                LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
+            }
+            buf_ptr++;
+    //      LED_CONTROL_PORT &= ~(1<<LED_BRIGHT);
+        }
+        LED_SELECT_PORT &= ~(1<<i);
+    }
 }
 
 void led_init(void)
 {
-	/* Array initialisieren */
-	memset(BUFFERS,0,sizeof(BUFFERS));
+    /* Array initialisieren */
+    memset(BUFFERS,0,sizeof(BUFFERS));
 
-	frontbuffer = BUFFERS;
-	backbuffer = BUFFERS + (2 * 16 * 4);
+    frontbuffer = BUFFERS;
+    backbuffer = BUFFERS + (2 * 16 * 4);
 
-	LED_SELECT_DDRD |= (1<<LED_SELECT_1) | 
-		(1<<LED_SELECT_2) | 
-		(1<<LED_SELECT_3) | 
-		(1<<LED_SELECT_4);
+    LED_SELECT_DDRD |= (1<<LED_SELECT_1) |
+        (1<<LED_SELECT_2) |
+        (1<<LED_SELECT_3) |
+        (1<<LED_SELECT_4);
 
-	LED_CONTROL_DDRD |= (1<<LED_RESET) | 
-		(1<<LED_BRIGHT) |
-		(1<<LED_CLOCK) |
-		(1<<LED_GREEN) |
-		(1<<LED_RED) |
-		(1<<LED_BRTWRT) | 
-		(1<<LED_BRTCLK);
+    LED_CONTROL_DDRD |= (1<<LED_RESET) |
+        (1<<LED_BRIGHT) |
+        (1<<LED_CLOCK) |
+        (1<<LED_GREEN) |
+        (1<<LED_RED) |
+        (1<<LED_BRTWRT) |
+        (1<<LED_BRTCLK);
 
-	LED_SELECT_PORT = 0;
-	LED_CONTROL_PORT = 0;
-	LED_CONTROL_PORT |= 1<<LED_BRTWRT;
+    LED_SELECT_PORT = 0;
+    LED_CONTROL_PORT = 0;
+    LED_CONTROL_PORT |= 1<<LED_BRTWRT;
 }
 
 void led_runner(void)
 {
+    led_update();
 
-
-	led_update();
-	
-	LED_CONTROL_PORT |= (1<<LED_CLOCK);
-	LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
-	
+    LED_CONTROL_PORT |= (1<<LED_CLOCK);
+    LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
 }
