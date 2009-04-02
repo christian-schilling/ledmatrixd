@@ -29,6 +29,14 @@ public class LedMatrix : Object {
     public void PrintStr (string msg) {
         if(!initialized) return;
         cur_message = msg;
+        led_matrix.clear_screen(&ledLine);
+        led_matrix.print(cur_message, &ledLine);
+        led_matrix.update(&ledLine);
+    }
+
+    public void Reset() {
+        if(!initialized) return;
+        led_matrix.reset();
     }
 
     public void ScrollLeft(int speed) {

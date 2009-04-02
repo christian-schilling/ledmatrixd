@@ -26,4 +26,7 @@ namespace led_matrix {
 
     [CCode (cname = "led_matrix_clear_screen", cheader_filename = "led_matrix.h")]
     public static int clear_screen(line *ledLine);
+    
+    [CCode (cname = "led_matrix_reset", cheader_filename = "led_matrix.h")]
+    public static void reset();
 }

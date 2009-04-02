@@ -21,11 +21,18 @@
 /*
  * This is the most simple server to obtain data for the 64x16 display
  */
-
+#include <avr/wdt.h>
 #include "lms.h"
 #include "../uip/uip.h"
 #include "../../led_matrix.h"
 #include "../../../common/protocol.h"
+
+void LedNetReset(LedNetMessage *net_msg,uint8_t data_byte)
+{
+    // let the watchdog reset the avr
+    wdt_enable(WDTO_15MS);
+    while(1);
+}
 
 void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
 {
@@ -42,7 +49,8 @@ void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
 }
 
 LedNetFunc LedNetFuncTable[] = {
-    LedNetFuncRawData
+    LedNetFuncRawData,
+    LedNetReset
 };
 
 void LMSInit()

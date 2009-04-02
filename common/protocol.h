@@ -13,5 +13,6 @@ typedef struct _LedNetMessage LedNetMessage;
 typedef void (*LedNetFunc)(LedNetMessage *net_msg,uint8_t data_byte);
 
 #define LED_NET_FUNC_RAW_DATA 0
+#define LED_NET_FUNC_RESET 1
 
 #endif

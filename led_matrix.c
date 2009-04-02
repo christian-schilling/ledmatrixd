@@ -46,12 +46,18 @@ static uint8_t *font = Arial_Bold_14;
 
 static int client_sock;
 
+static char led_matrix_ip[20];
+
 int led_matrix_init(char *matrix_ip)
 {
     struct sockaddr_in server,client;
     int recv_size;
     int send_size;
     unsigned char command;
+    if(matrix_ip)
+        strcpy(led_matrix_ip, matrix_ip);
+    else if(led_matrix_ip[0])
+        matrix_ip = led_matrix_ip;
 
     client_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(client_sock < 0)
@@ -197,5 +203,20 @@ void led_matrix_update(struct _ledLine *ledLine)
     bytes_send = send(client_sock, &message, sizeof(LedNetMessage),0);
     bytes_send = send(client_sock, ledLine->buffer_red, sizeof(uint16_t)*4*16,0);
     bytes_send = send(client_sock, ledLine->buffer_green, sizeof(uint16_t)*4*16,0);
+}
+
+void led_matrix_reset()
+{
+    int bytes_send;
+    LedNetMessage message;
+    message.version = 1;
+    message.func_id = LED_NET_FUNC_RESET;
+    message.byte_count = 0;
+
+    bytes_send = send(client_sock, &message, sizeof(LedNetMessage),0);
+    //send dummy byte so LED_NET_FUNC_RESET gets executed once
+    bytes_send = send(client_sock, &message, 1,0);
+    led_matrix_finish();
+    led_matrix_init(NULL);
 }
 
