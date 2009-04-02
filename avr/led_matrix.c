@@ -139,7 +139,7 @@ void led_runner(void)
 
 #include "../arial_bold_14.h"
 #include "../Comic_10.h"
-//PGM_P font = Arial_Bold_14;
+PGM_P font_table[] = { Arial_Bold_14, Comic_10 };
 PGM_P font = Comic_10;
 #define COLOR_RED 0
 #define COLOR_GREEN 1

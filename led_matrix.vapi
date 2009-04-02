@@ -29,4 +29,10 @@ namespace led_matrix {
     
     [CCode (cname = "led_matrix_reset", cheader_filename = "led_matrix.h")]
     public static void reset();
+    
+    [CCode (cname = "led_matrix_select_font", cheader_filename = "led_matrix.h")]
+    public static void select_font(int font);
+    
+    [CCode (cname = "led_matrix_print_direct", cheader_filename = "led_matrix.h")]
+    public static void print_direct(string msg);
 }

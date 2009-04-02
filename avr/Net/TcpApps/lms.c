@@ -22,6 +22,7 @@
  * This is the most simple server to obtain data for the 64x16 display
  */
 #include <avr/wdt.h>
+#include <string.h>
 #include "lms.h"
 #include "../uip/uip.h"
 #include "../../led_matrix.h"
@@ -32,6 +33,32 @@ void LedNetReset(LedNetMessage *net_msg,uint8_t data_byte)
     // let the watchdog reset the avr
     wdt_enable(WDTO_15MS);
     while(1);
+}
+
+void LedNetSelectFont(LedNetMessage *net_msg,uint8_t data_byte)
+{
+    font = font_table[data_byte]; 
+}
+
+void LedNetPutString(LedNetMessage *net_msg,uint8_t data_byte)
+{
+    /* beware! max length of string is 100 */
+    static char string[101];
+    static uint16_t byte_counter = 0;
+    if(byte_counter < 100)
+    {
+        string[byte_counter++] = (char)data_byte;
+    }
+    else
+        byte_counter = 0;
+    if(byte_counter >= net_msg->byte_count)
+    {
+        byte_counter = 0;
+        putString(backbuffer,backbuffer+16*4,string,0,1);
+        swap_buffers();
+        memset(backbuffer,0,sizeof(uint16_t)*16*4*2);
+        memset(string,0,sizeof(string));
+    }
 }
 
 void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
@@ -50,7 +77,9 @@ void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
 
 LedNetFunc LedNetFuncTable[] = {
     LedNetFuncRawData,
-    LedNetReset
+    LedNetReset,
+    LedNetSelectFont,
+    LedNetPutString
 };
 
 void LMSInit()
@@ -87,7 +116,7 @@ void LMSCall(   uint8_t* pBuffer,
             {
                 LedNetFuncTable[pSocket->cur_message.func_id](&(pSocket->cur_message),*pBuffer++);
                 pSocket->byte_counter++;
-                if(pSocket->byte_counter == pSocket->cur_message.byte_count)
+                if(pSocket->byte_counter >= pSocket->cur_message.byte_count)
                 {
                     pSocket->has_message = 0;
                     pSocket->byte_counter = 0;

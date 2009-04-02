@@ -33,10 +33,20 @@ public class LedMatrix : Object {
         led_matrix.print(cur_message, &ledLine);
         led_matrix.update(&ledLine);
     }
+    
+    public void PrintStrDirect (string msg) {
+        if(!initialized) return;
+        led_matrix.print_direct(msg);
+    }
 
     public void Reset() {
         if(!initialized) return;
         led_matrix.reset();
+    }
+
+    public void SelectFont(int font) {
+        if(!initialized) return;
+        led_matrix.select_font(font);
     }
 
     public void ScrollLeft(int speed) {

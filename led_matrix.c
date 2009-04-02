@@ -43,10 +43,10 @@
 
 
 static uint8_t *font = Arial_Bold_14;
-
 static int client_sock;
-
 static char led_matrix_ip[20];
+
+static void led_matrix_command(uint8_t cmd, uint16_t size, uint8_t *data);
 
 int led_matrix_init(char *matrix_ip)
 {
@@ -207,16 +207,37 @@ void led_matrix_update(struct _ledLine *ledLine)
 
 void led_matrix_reset()
 {
+    led_matrix_command(LED_NET_FUNC_RESET, 1, NULL);
+    led_matrix_finish();
+    led_matrix_init(NULL);
+}
+
+void led_matrix_select_font(uint8_t font)
+{
+    led_matrix_command(LED_NET_FUNC_FONT, 1, &font);
+}
+
+void led_matrix_print_direct(char *string)
+{
+    if(strlen(string) && strlen(string) < 100)
+        led_matrix_command(LED_NET_FUNC_STRING, strlen(string), string);
+}
+
+static void led_matrix_command(uint8_t cmd, uint16_t size, uint8_t *data)
+{
     int bytes_send;
     LedNetMessage message;
     message.version = 1;
-    message.func_id = LED_NET_FUNC_RESET;
-    message.byte_count = 0;
+    message.func_id = cmd;
+    message.byte_count = size;
 
     bytes_send = send(client_sock, &message, sizeof(LedNetMessage),0);
-    //send dummy byte so LED_NET_FUNC_RESET gets executed once
-    bytes_send = send(client_sock, &message, 1,0);
-    led_matrix_finish();
-    led_matrix_init(NULL);
+    if(data)
+        bytes_send = send(client_sock, data, size,0);
+    else
+    {
+        /* send a dummy byte so the called function gets executed once */
+        bytes_send = send(client_sock, &message, 1,0);
+    }
 }
 

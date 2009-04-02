@@ -16,9 +16,9 @@
 * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 * Boston, MA 02111-1307, USA.
 */
-
 #ifndef __LED_led_H__
 #define __LED_led_H__
+#include <avr/pgmspace.h>
 
 /* ------------------ VERY VERY VERY important! ---------------
  *
@@ -33,6 +33,8 @@ extern void swap_buffers(void);
 
 extern uint16_t *backbuffer;
 extern int16_t putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int16_t x, int16_t y);
+extern PGM_P font;
+extern PGM_P font_table[];
 
 //extern void draw_me_a_picture(void);
 
