@@ -20,6 +20,21 @@
 #include "Net/uip/uip_TcpAppHub.h"
 #include "led_matrix.h"
 
+#define IP_ADDRESS1 192
+#define IP_ADDRESS2 168
+#define IP_ADDRESS3 0
+#define IP_ADDRESS4 93
+
+#define NETMASK1 255
+#define NETMASK2 255
+#define NETMASK3 0
+#define NETMASK4 0
+
+#define ROUTER1 192
+#define ROUTER2 168
+#define ROUTER3 0
+#define ROUTER4 2
+
 static uint8_t g_nPrescaler = 100;
 static volatile struct
 {
@@ -30,7 +45,7 @@ static volatile struct
 int main()
 {
     uip_ipaddr_t IpAddr;
-
+    char ip_addr_string[16];
     SpiInit();
     Enc28j60Init();
     uip_arp_init();
@@ -42,17 +57,24 @@ int main()
     OCR1A = 19531; //12500000 / 64 / 19531,25 = 10Hz (100ms)
     TIMSK = (1<<OCIE1A);
 
-    uip_ipaddr(IpAddr, 192, 168, 2, 10);
+    uip_ipaddr(IpAddr, IP_ADDRESS1, IP_ADDRESS2, IP_ADDRESS3, IP_ADDRESS4);
     uip_sethostaddr(IpAddr);
-    uip_ipaddr(IpAddr, 192, 168, 2, 1);
+    uip_ipaddr(IpAddr, ROUTER1, ROUTER2, ROUTER3, ROUTER4);
     uip_setdraddr(IpAddr);
-    uip_ipaddr(IpAddr, 255, 255, 255, 0);
+    uip_ipaddr(IpAddr, NETMASK1, NETMASK2, NETMASK3, NETMASK4);
     uip_setnetmask(IpAddr);
 
+    // sprintf will increment flash usage. too lazy to write a replacement now
+    sprintf(ip_addr_string,"%01d.%01d.%01d.%01d", IP_ADDRESS1,
+        IP_ADDRESS2,
+        IP_ADDRESS3,
+        IP_ADDRESS4);
     led_init();
 
     sei ();
-
+    
+    putString(backbuffer,backbuffer+16*4,ip_addr_string,0,1);
+    swap_buffers();
 
     while (1)
     {
