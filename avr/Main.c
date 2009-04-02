@@ -35,6 +35,9 @@
 #define ROUTER3 0
 #define ROUTER4 2
 
+#define STRFY(s) #s
+#define IP_STRING(A,B,C,D) STRFY(A)"."STRFY(B)"."STRFY(C)"."STRFY(D)
+
 static uint8_t g_nPrescaler = 100;
 static volatile struct
 {
@@ -45,7 +48,6 @@ static volatile struct
 int main()
 {
     uip_ipaddr_t IpAddr;
-    char ip_addr_string[16];
     SpiInit();
     Enc28j60Init();
     uip_arp_init();
@@ -64,16 +66,11 @@ int main()
     uip_ipaddr(IpAddr, NETMASK1, NETMASK2, NETMASK3, NETMASK4);
     uip_setnetmask(IpAddr);
 
-    // sprintf will increment flash usage. too lazy to write a replacement now
-    sprintf(ip_addr_string,"%01d.%01d.%01d.%01d", IP_ADDRESS1,
-        IP_ADDRESS2,
-        IP_ADDRESS3,
-        IP_ADDRESS4);
     led_init();
 
     sei ();
-    
-    putString(backbuffer,backbuffer+16*4,ip_addr_string,0,1);
+
+    putString(backbuffer,backbuffer+16*4,IP_STRING(IP_ADDRESS1,IP_ADDRESS2,IP_ADDRESS3,IP_ADDRESS4),0,1);
     swap_buffers();
 
     while (1)
