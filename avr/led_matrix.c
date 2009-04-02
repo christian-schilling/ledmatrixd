@@ -231,12 +231,12 @@ void draw_me_a_picture()
 {
     static x = 0;
     memset(backbuffer,0,sizeof(uint16_t)*16*4*2);
-    PUT_PIXEL(backbuffer,(1+x)%64,1);
-    PUT_PIXEL(backbuffer+16*4,(10+x)%64,5);
-    PUT_PIXEL(backbuffer,(20+x)%64,1);
-    PUT_PIXEL(backbuffer,(30+x)%64,5);
-    x = (x+1)%(100);
-    putString(backbuffer,backbuffer+16*4,"Hallo \bWelt",x,1);
+//    PUT_PIXEL(backbuffer,(1+x)%64,1);
+//    PUT_PIXEL(backbuffer+16*4,(10+x)%64,5);
+//    PUT_PIXEL(backbuffer,(20+x)%64,1);
+//    PUT_PIXEL(backbuffer,(30+x)%64,5);
+    x = (x+1)%(64);
+    putString(backbuffer,backbuffer+16*4,"\rHallo \a - \bWelt",x,1);
 
     swap_buffers();
 }

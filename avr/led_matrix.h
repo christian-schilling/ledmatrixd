@@ -32,6 +32,7 @@ extern void led_init(void);
 extern void swap_buffers(void);
 
 extern uint16_t *backbuffer;
+extern int16_t putString(uint16_t *buffer_red,uint16_t *buffer_green, char *string, int16_t x, int16_t y);
 
 //extern void draw_me_a_picture(void);
 

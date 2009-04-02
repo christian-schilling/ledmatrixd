@@ -114,9 +114,7 @@ int main()
                 g_nPrescaler = 100;
             }
 
-            draw_me_a_picture();
         }
-
         /* Comment this out and your led-matrix will go up in flames */
 
         led_runner();
