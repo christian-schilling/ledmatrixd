@@ -71,7 +71,6 @@ void LedNetFuncRawData(LedNetMessage *net_msg,uint8_t data_byte)
         byte_counter = 0;
         swap_buffers();
         memset(backbuffer,0,sizeof(uint16_t)*16*4*2);
-        //draw_me_a_picture();
     }
 }
 

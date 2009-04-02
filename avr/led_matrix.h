@@ -36,6 +36,4 @@ extern int16_t putString(uint16_t *buffer_red,uint16_t *buffer_green, char *stri
 extern PGM_P font;
 extern PGM_P font_table[];
 
-//extern void draw_me_a_picture(void);
-
 #endif
