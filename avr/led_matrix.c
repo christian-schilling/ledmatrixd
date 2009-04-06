@@ -62,17 +62,18 @@ void led_update(void)
     uint8_t counter,counter2,i;
 
     /* reset */
+    LED_CONTROL_PORT |= (1<<LED_BRIGHT);
     LED_CONTROL_PORT |= (1<<LED_RESET);
     LED_CONTROL_PORT &= ~(1<<LED_RESET);
+    LED_CONTROL_PORT &=  ~(1<<LED_BRIGHT);
 
     uint16_t *buf_ptr = frontbuffer;
     for(i=0;i<4;i++)
     {
-        LED_SELECT_PORT |= (1<<i);
+        // select line on for module i
         for(counter2 = 0;counter2 < 16;counter2++)
         {
-    //      LED_CONTROL_PORT |= (1<<LED_BRIGHT);
-    //      LED_CONTROL_PORT |=  (1<<LED_BRIGHT);
+            LED_CONTROL_PORT |= (1<<LED_BRIGHT);
             for(counter = 0; counter < 16; counter++)
             {
                 if((*buf_ptr>>counter)&1)
@@ -87,8 +88,13 @@ void led_update(void)
                 LED_CONTROL_PORT &= ~(1<<LED_CLOCK);
             }
             buf_ptr++;
-    //      LED_CONTROL_PORT &= ~(1<<LED_BRIGHT);
+            LED_CONTROL_PORT &=  ~(1<<LED_BRIGHT);
+            _delay_ms(0.5);
+            LED_SELECT_PORT |= (1<<i);
         }
+        _delay_us(1);
+        LED_CONTROL_PORT &=  ~(1<<LED_BRIGHT);
+        // select line off for module i
         LED_SELECT_PORT &= ~(1<<i);
     }
 }
@@ -116,7 +122,7 @@ void led_init(void)
 
     LED_SELECT_PORT = 0;
     LED_CONTROL_PORT = 0;
-    LED_CONTROL_PORT |= 1<<LED_BRTWRT;
+   // LED_CONTROL_PORT |= 1<<LED_BRTWRT;
 }
 
 void led_runner(void)
@@ -130,7 +136,7 @@ void led_runner(void)
 ///////////////////////////////////////////////7
 /////////////////////////////////////////////////
 
-#define LED_HEADFIRST
+//#define LED_HEADFIRST
 #ifdef LED_HEADFIRST
 #define PUT_PIXEL(buffer,x,y) *(((uint16_t*)buffer)+((16*4-1-(x))/16)*16+(15-(y))) |= 1 << ((16*4-1-(x))%16)
 #else
